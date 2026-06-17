@@ -14,7 +14,7 @@ function loadConfig(): PluginConfig {
 
 function createLogger(debug: boolean) {
   return {
-    debug: (msg: string) => console.error(`[zellij-sync] ${msg}`),
+    debug: (msg: string) => debug && console.error(`[zellij-sync] ${msg}`),
     error: (msg: string) => console.error(`[zellij-sync] ERROR: ${msg}`),
   };
 }
@@ -116,9 +116,6 @@ export const ZellijNamer = async () => {
       const e = event as { type?: string };
       if (e.type === "session.updated") {
         const title = extractTitle(event);
-        if (!title) return;
-        if (title === "Retitle generation" || title === "Retitle Session") return;
-        log.debug(`session.updated — title: ${title}`);
         if (title) {
           process.nextTick(() => syncFromEvent(title).catch((err) => log.error(err?.message || "unknown")));
         }
