@@ -149,6 +149,19 @@ describe("opencode-zellij-namer", () => {
       expect(spawnCalls[0].args).toEqual(["action", "rename-pane", "via properties"]);
     });
 
+    test("handles session.updated with title in info (upstream payload)", async () => {
+      process.env.ZELLIJ = "0";
+      process.env.ZELLIJ_SESSION_NAME = "happy-wolf";
+      const plugin = await ZellijNamer();
+      await new Promise((r) => setTimeout(r, 50));
+      spawnCalls.length = 0;
+
+      await plugin.event({ event: { type: "session.updated", sessionID: "abc123", info: { title: "Fixing zellij spam", id: "abc123", slug: "abc", projectID: "p1", directory: "/home", version: "1.0" } } });
+      await new Promise((r) => setTimeout(r, 50));
+      expect(spawnCalls).toHaveLength(1);
+      expect(spawnCalls[0].args).toEqual(["action", "rename-pane", "Fixing zellij spam"]);
+    });
+
     test("skips session.updated with no title", async () => {
       process.env.ZELLIJ = "0";
       process.env.ZELLIJ_SESSION_NAME = "happy-wolf";

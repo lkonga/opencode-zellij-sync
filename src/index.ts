@@ -50,6 +50,10 @@ function extractTitle(event: unknown): string | null {
   if (!event || typeof event !== "object") return null;
   const e = event as Record<string, unknown>;
   if (typeof e.title === "string") return e.title;
+  const info = e.info;
+  if (info && typeof info === "object" && typeof (info as Record<string, unknown>).title === "string") {
+    return (info as Record<string, unknown>).title as string;
+  }
   const props = e.properties;
   if (props && typeof props === "object" && typeof (props as Record<string, unknown>).title === "string") {
     return (props as Record<string, unknown>).title as string;
