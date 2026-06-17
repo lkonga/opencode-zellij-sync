@@ -1,82 +1,55 @@
-import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui";
-import {
-  loadNoiseConfig,
-  addNoiseCommand,
-  removeNoiseCommand,
-  addNoisePattern,
-  removeNoisePattern,
-  resetNoiseConfig,
-  getNoiseCommands,
-  getNoisePatterns,
-} from "./noise.js";
+import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@opencode-ai/plugin/tui";
+import { spawn } from "child_process";
+import { existsSync } from "fs";
+import { join } from "path";
+
+function findZellij(): string {
+  const home = process.env.HOME || "";
+  const paths = [
+    join(home, ".cargo", "bin", "zellij"),
+    "/usr/local/bin/zellij",
+    "/usr/bin/zellij",
+  ];
+  for (const p of paths) {
+    if (existsSync(p)) return p;
+  }
+  return "zellij";
+}
+
+function syncPaneTitle(api: TuiPluginApi, title?: string) {
+  if (!process.env.ZELLIJ) {
+    api.ui.toast({ variant: "warning", title: "Zellij Sync", message: "Not inside zellij" });
+    return;
+  }
+
+  const session = title || process.env.ZELLIJ_SESSION_NAME;
+  if (!session) {
+    api.ui.toast({ variant: "warning", title: "Zellij Sync", message: "No session name to sync" });
+    return;
+  }
+
+  try {
+    const zellij = findZellij();
+    spawn(zellij, ["action", "rename-pane", session], { detached: true, stdio: "ignore" }).unref();
+    api.ui.toast({ variant: "success", title: "Zellij Sync", message: `Pane title: ${session}` });
+  } catch (e) {
+    api.ui.toast({ variant: "error", title: "Zellij Sync", message: `Failed: ${e instanceof Error ? e.message : "unknown"}` });
+  }
+}
 
 const tui: TuiPlugin = async (api) => {
-  loadNoiseConfig({
-    noiseExtra: process.env.OPENCODE_ZN_NOISE_EXTRA || "",
-    noisePatterns: process.env.OPENCODE_ZN_NOISE_PATTERNS || "",
-  });
-
   api.command.register(() => [
     {
-      title: "Add noise command",
-      value: "zellij-namer-add",
-      category: "Zellij Namer",
-      description: "Add a command to the noise filter (e.g., /zellij-namer add ls)",
-      slash: { name: "zellij-namer", aliases: ["zn"] },
-      onSelect: () => {},
+      title: "Sync zellij pane title",
+      value: "zellij-sync",
+      category: "Session",
+      description: "Sync the current session title to the zellij pane title",
+      slash: { name: "zellij-sync" },
+      onSelect: () => {
+        syncPaneTitle(api);
+      },
     },
   ]);
-
-  const unsub = api.event.on("session.idle", (event) => {
-    const msgs = (event as any).messages ?? [];
-    const lastMsg = msgs[msgs.length - 1];
-    if (!lastMsg?.content || typeof lastMsg.content !== "string") return;
-
-    const content = lastMsg.content.trim();
-    if (!content.startsWith("/zellij-namer ") && !content.startsWith("/zn ")) return;
-
-    const prefix = content.startsWith("/zn ") ? 4 : 14;
-    const parts = content.slice(prefix).trim().split(/\s+/);
-    const sub = parts[0];
-    const args = parts.slice(1);
-
-    if (sub === "add" && args[0]) {
-      addNoiseCommand(args[0]);
-      api.ui.toast({ variant: "success", title: "Noise: Added", message: `"${args[0]}" to noise filter (${getNoiseCommands().length} total)` });
-    } else if (sub === "remove" && args[0]) {
-      removeNoiseCommand(args[0]);
-      api.ui.toast({ variant: "info", title: "Noise: Removed", message: `"${args[0]}" from noise filter` });
-    } else if (sub === "pattern" && args[0] === "add" && args[1]) {
-      const source = args.slice(1).join(" ");
-      try {
-        addNoisePattern(new RegExp(source, "i"));
-        api.ui.toast({ variant: "success", title: "Noise: Pattern Added", message: `/${source}/i` });
-      } catch {
-        api.ui.toast({ variant: "error", title: "Noise: Invalid Regex", message: source });
-      }
-    } else if (sub === "pattern" && args[0] === "remove" && args[1]) {
-      const source = args.slice(1).join(" ");
-      if (removeNoisePattern(source)) {
-        api.ui.toast({ variant: "info", title: "Noise: Pattern Removed", message: `/${source}/i` });
-      } else {
-        api.ui.toast({ variant: "warning", title: "Noise: Pattern Not Found", message: `/${source}/i` });
-      }
-    } else if (sub === "list") {
-      const cmds = getNoiseCommands();
-      const patterns = getNoisePatterns();
-      api.ui.toast({
-        variant: "info",
-        title: "Noise Filter",
-        message: `${cmds.length} commands: ${cmds.slice(0, 8).join(", ")}${cmds.length > 8 ? "..." : ""} | ${patterns.length} patterns`,
-        duration: 5000,
-      });
-    } else if (sub === "reset") {
-      resetNoiseConfig();
-      api.ui.toast({ variant: "info", title: "Noise: Reset", message: "Restored factory defaults" });
-    }
-  });
-
-  api.lifecycle.onDispose(unsub);
 };
 
-export default { tui } satisfies TuiPluginModule;
+export default { id: "opencode-zellij-sync", tui } as TuiPluginModule & { id: string };
