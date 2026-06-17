@@ -14,8 +14,8 @@ function loadConfig(): PluginConfig {
 
 function createLogger(debug: boolean) {
   return {
-    debug: (msg: string) => debug && console.error(`[zellij-namer] ${msg}`),
-    error: (msg: string) => console.error(`[zellij-namer] ERROR: ${msg}`),
+    debug: (msg: string) => console.error(`[zellij-sync] ${msg}`),
+    error: (msg: string) => console.error(`[zellij-sync] ERROR: ${msg}`),
   };
 }
 
@@ -49,19 +49,24 @@ export function renamePane(title: string, zellij: string, log: ReturnType<typeof
 function extractTitle(event: unknown): string | null {
   if (!event || typeof event !== "object") return null;
   const e = event as Record<string, unknown>;
-  if (typeof e.title === "string") return e.title;
   const props = e.properties;
   if (props && typeof props === "object") {
     const p = props as Record<string, unknown>;
-    if (typeof p.title === "string") return p.title;
     const info = p.info;
-    if (info && typeof info === "object" && typeof (info as Record<string, unknown>).title === "string") {
-      return (info as Record<string, unknown>).title as string;
+    if (info && typeof info === "object") {
+      const i = info as Record<string, unknown>;
+      if (typeof i.title === "string") {
+        if (i.parentID != null) return null;
+        return i.title;
+      }
     }
+    if (typeof p.title === "string") return p.title;
   }
-  const info = e.info;
-  if (info && typeof info === "object" && typeof (info as Record<string, unknown>).title === "string") {
-    return (info as Record<string, unknown>).title as string;
+  if (typeof e.title === "string") return e.title;
+  const directInfo = e.info;
+  if (directInfo && typeof directInfo === "object") {
+    const i = directInfo as Record<string, unknown>;
+    if (typeof i.title === "string" && i.parentID == null) return i.title;
   }
   return null;
 }
@@ -111,6 +116,9 @@ export const ZellijNamer = async () => {
       const e = event as { type?: string };
       if (e.type === "session.updated") {
         const title = extractTitle(event);
+        if (!title) return;
+        if (title === "Retitle generation" || title === "Retitle Session") return;
+        log.debug(`session.updated — title: ${title}`);
         if (title) {
           process.nextTick(() => syncFromEvent(title).catch((err) => log.error(err?.message || "unknown")));
         }
