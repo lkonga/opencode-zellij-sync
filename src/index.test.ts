@@ -162,6 +162,19 @@ describe("opencode-zellij-namer", () => {
       expect(spawnCalls[0].args).toEqual(["action", "rename-pane", "Fixing zellij spam"]);
     });
 
+    test("handles session.updated with properties.info.title (backend plugin payload)", async () => {
+      process.env.ZELLIJ = "0";
+      process.env.ZELLIJ_SESSION_NAME = "happy-wolf";
+      const plugin = await ZellijNamer();
+      await new Promise((r) => setTimeout(r, 50));
+      spawnCalls.length = 0;
+
+      await plugin.event({ event: { id: "evt1", type: "session.updated", properties: { sessionID: "abc", info: { title: "Backend plugin title" } } } });
+      await new Promise((r) => setTimeout(r, 50));
+      expect(spawnCalls).toHaveLength(1);
+      expect(spawnCalls[0].args).toEqual(["action", "rename-pane", "Backend plugin title"]);
+    });
+
     test("skips session.updated with no title", async () => {
       process.env.ZELLIJ = "0";
       process.env.ZELLIJ_SESSION_NAME = "happy-wolf";
