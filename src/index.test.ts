@@ -48,6 +48,14 @@ describe("opencode-zellij-namer", () => {
       expect(spawnCalls[0].args).toEqual(["action", "rename-pane", "hCaptcha pipeline"]);
     });
 
+    test("uses ZELLIJ_PANE_ID when set", () => {
+      process.env.ZELLIJ_PANE_ID = "42";
+      const log = { debug: () => {}, error: () => {} };
+      renamePane("test-title", "zellij", log as any);
+      expect(spawnCalls[0].args).toEqual(["action", "rename-pane", "--pane-id", "42", "test-title"]);
+      delete process.env.ZELLIJ_PANE_ID;
+    });
+
     test("returns true on success", () => {
       const log = { debug: () => {}, error: () => {} };
       expect(renamePane("test-title", "zellij", log as any)).toBe(true);

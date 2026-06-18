@@ -37,8 +37,12 @@ export function findZellij(log: ReturnType<typeof createLogger>): string {
 
 export function renamePane(title: string, zellij: string, log: ReturnType<typeof createLogger>): boolean {
   try {
-    spawn(zellij, ["action", "rename-pane", title], { detached: true, stdio: "ignore" }).unref();
-    log.debug(`Synced pane title to: ${title}`);
+    const paneId = process.env.ZELLIJ_PANE_ID;
+    const args = paneId
+      ? ["action", "rename-pane", "--pane-id", paneId, title]
+      : ["action", "rename-pane", title];
+    spawn(zellij, args, { detached: true, stdio: "ignore" }).unref();
+    log.debug(`Synced pane title to: ${title} (pane: ${paneId || "focused"})`);
     return true;
   } catch (e) {
     log.error(`Rename pane failed: ${e instanceof Error ? e.message : "unknown"}`);

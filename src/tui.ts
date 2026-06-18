@@ -18,7 +18,11 @@ function findZellij(): string {
 
 function renamePane(title: string): boolean {
   try {
-    spawn(findZellij(), ["action", "rename-pane", title], { detached: true, stdio: "ignore" }).unref();
+    const paneId = process.env.ZELLIJ_PANE_ID;
+    const args = paneId
+      ? ["action", "rename-pane", "--pane-id", paneId, title]
+      : ["action", "rename-pane", title];
+    spawn(findZellij(), args, { detached: true, stdio: "ignore" }).unref();
     return true;
   } catch {
     return false;
