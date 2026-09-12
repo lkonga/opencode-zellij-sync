@@ -1,0 +1,29 @@
+{
+  "name": "opencode-zellij-sync-v2",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "V2 TUI port of opencode-zellij-sync — sync the OpenCode session title to the zellij pane title",
+  "exports": {
+    "./tui": "./tui.tsx"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "build": "bun build.mjs"
+  },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "tui",
+    "zellij",
+    "pane-title"
+  ],
+  "opencode": {
+    "plugin": true
+  },
+  "devDependencies": {
+    "solid-js": "^1.9.0",
+    "@opentui/solid": "0.5.3"
+  }
+}
