@@ -2,9 +2,9 @@
  * Loader-contract and registration-surface tests.
  *
  * These import ./plugin.ts (host-free, no JSX) so they run anywhere — including
- * a plain root `bun install` in CI, where only the committed
- * `node_modules/@opencode/plugin/tui` stand-in is available. The thin JSX
- * boundary in ./tui.tsx is exercised by the bounded V2 TUI runtime smoke.
+ * a clean `bun install` in CI. The unpublished host-only
+ * `@opencode/plugin/tui` module is mocked below; the thin JSX boundary in
+ * ./tui.tsx is exercised by the bounded V2 TUI runtime smoke.
  *
  * Covered:
  *   1. Loader contract: the default export shape the V2 TUI loader accepts —
@@ -15,9 +15,14 @@
  *      (V1's `session.updated` equivalent) with cleanup.
  *   4. Command layer: `/zellij-sync` slash + palette entry, no invented keybind.
  */
-import { describe, expect, test } from "bun:test"
-import { createZellijSyncPlugin, INITIAL_SYNC_DELAYS_MS, PLUGIN_ID } from "../plugin.ts"
-import { COMMAND_ID, zellijSyncLayerInput } from "../zellij-sync.ts"
+import { describe, expect, mock, test } from "bun:test"
+
+mock.module("@opencode/plugin/tui", () => ({
+  Plugin: { define: (definition: unknown) => definition },
+}))
+
+const { createZellijSyncPlugin, INITIAL_SYNC_DELAYS_MS, PLUGIN_ID } = await import("../plugin.ts")
+const { COMMAND_ID, zellijSyncLayerInput } = await import("../zellij-sync.ts")
 
 function fakeContext(route: any = { type: "session", sessionID: "ses_1" }, title?: string) {
   const toasts: any[] = []

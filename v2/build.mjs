@@ -1,5 +1,5 @@
 /**
- * Regenerates the committed V2 artifact `v2/dist/tui.js` from `v2/tui.tsx`.
+ * Regenerates the validation artifact `v2/dist/tui.js` from `v2/tui.tsx`.
  *
  * Uses the exact Solid transform the OpenCode V2 TUI host applies to external
  * plugins: `createSolidTransformPlugin()` from `@opentui/solid/bun-plugin`,
@@ -10,6 +10,8 @@
  * core module) stay external: the host rewrites both for external plugins.
  *
  * Usage:  cd v2 && bun install && bun run build
+ * The V2 host loads `./tui.tsx` through the package export; `dist/tui.js` is
+ * intentionally ignored and used only to prove the source build is reproducible.
  * Never hand-edit dist/ — rerun this script instead.
  */
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
