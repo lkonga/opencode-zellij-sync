@@ -10,8 +10,9 @@
  * core module) stay external: the host rewrites both for external plugins.
  *
  * Usage:  cd v2 && bun install && bun run build
- * The V2 host loads `./tui.tsx` through the package export; `dist/tui.js` is
- * intentionally ignored and used only to prove the source build is reproducible.
+ * The V2 host resolves this local plugin directory as its sibling `./tui.tsx`;
+ * `dist/tui.js` is intentionally ignored and used only to prove the source
+ * build is reproducible.
  * Never hand-edit dist/ — rerun this script instead.
  */
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"

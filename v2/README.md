@@ -1,10 +1,11 @@
 # V2 TUI entrypoint
 
 OpenCode V2 loads this directory as a local TUI plugin. Its public plugin
-resolver appends `/tui` to a plugin-directory URL, and Bun resolves that path
-through `package.json`'s `"./tui": "./tui.tsx"` export. The source TSX file is
-therefore the canonical runtime entrypoint, matching the proven
-`opencode-pool-guard/v2` convention.
+resolver appends `/tui` to a plugin-directory URL, and Bun resolves the sibling
+`tui.tsx` file. The package's `"./tui"` export independently points package
+consumers at that same source file. The source TSX file is therefore the
+canonical runtime entrypoint, matching the proven `opencode-pool-guard/v2`
+convention.
 
 `bun run build` produces `dist/tui.js` only as a reproducibility and loader
 validation artifact. The repository's broad `dist/` ignore intentionally keeps
